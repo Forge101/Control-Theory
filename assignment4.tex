@@ -1,0 +1,83 @@
+\section{Control of a pendulum}
+\subsection{Model and identification of the system}
+
+The physical laws that work on the system are the laws of newton. They can be written into the equations of motion. For this cart two equations can be written down. One for the cart itself and one for the pendulum. Only this final one will be used in this section and is the following
+\begin{equation}
+    \label{eq:eqofmotion}
+    I\ddot{\theta} = -mgL\sin(\theta) - cos(\theta)\ddot{x}Lm - c\dot{\theta}L
+\end{equation}
+This equation is theoretical continuous model of the used cart with a pendulum. In this equation there are several constants and symobls used: g being the gravitational acceleration and equal to 9,81 $m/s^{2}$, L the length of the pendulum (the most mass is around the bolts, so the distance to centre of these bolts is taken as the length) is 13,3 $cm$, m being the mass of the pendulum given in $kg$, c the friction coefficient given in $Ns/m$ and finally theta being the angle between the vertical axis and the pendulum, defined positively for clockwise motion and vice versa and given in radians.\\
+\\
+The input of the system is the acceleration of the cart given in $m/s^{2}$. The outputs of the system are: the angle of the pendulum given in radians and the acceleration of the pendulum given in $rad/s^{2}$.\\
+\\
+For the state-space equation the states are given: $\xi = [x, \theta, L\dot{\theta}+\dot{x}cos(\theta)]^{T}$. The first term, x, is the position of the cart, the second term the angle of the pendulum and the final term being the tangential velocity of the pendulum. Using these three given states the non-lineair model can be used to derive the state-space equations: $\dot{\xi}$ as a function of $\xi$ and $v$, $v$ being the velocity of the cart.\\
+\\
+The first equation is obtained by realising that the derivative of the first state is equal to the input of the system $v$.\\
+\\
+The second equation $\dot{\xi}_{2}$, equal to $\dot{\theta}$, is obtained by looking at $L\dot{\theta}+\dot{x}cos(\theta)$ (the third state) and seeing that the term is in there. So to be able to write the derivative as a function of the given states $\xi_{3}$ can be used and by subtracting a certain term and dividing by L $\dot{\xi}_{2}$ is obtained as a function of the given states.\\
+\\
+For the third and final state firstly the third state equation is derived
+\begin{equation}
+    l\ddot{\theta} + \ddot{x}cos(\theta) + \dot{x}\dot{\theta}cos(\theta)L
+\end{equation}
+The first two terms can be substituted by looking at the equation of motion of the pendulum (equation (\ref{eq:eqofmotion})). For the second term the strategy of before is used: combing/using the given states to rewrite the extra term. Combining these tricks $\dot{\xi}_{3}$ can be rewritten with the given states
+\begin{equation}
+    \dot{\xi_{3}} = \frac{c}{m}(\frac{vcos(\theta)}{L}-\frac{\xi_{3}}{L})-sin(\xi_{2})(g+\frac{v\xi_{3}-v^{2}cos(\xi_{2})}{L})
+\end{equation}
+Combining all these equations leads to
+\begin{equation}
+    \begin{bmatrix} 
+        \dot{\xi}_{1} \\
+        \dot{\xi}_{2} \\
+        \dot{\xi}_{3}
+    \end{bmatrix}
+    =
+    \begin{bmatrix} 
+        v\\
+        \frac{\xi_{3}}{L} - \frac{vcos(\xi_{2})}{L} \\
+        \frac{c}{m}(\frac{vcos(\theta)}{L}-\frac{\xi_{3}}{L})-sin(\xi_{2})(g+\frac{v\xi_{3}-v^{2}cos(\xi_{2})}{L})
+    \end{bmatrix}
+\end{equation}
+\begin{equation}
+    A
+    =
+    \begin{bmatrix} 
+        0& 0& 0 \\
+        0& \frac{vsin(\xi_{2})}{l}& \frac{1}{l}\\
+        0& -g& \frac{-c}{ml}-\frac{vsin(\xi_{2})}{l}
+    \end{bmatrix}
+\end{equation}
+\begin{equation}
+    B
+    =
+    \begin{bmatrix} 
+        1 \\
+        \frac{-cos(\xi_{2})}{l}\\
+        \frac{c}{ml}
+    \end{bmatrix}
+\end{equation}
+
+
+
+
+
+    
+\begin{equation}
+    A
+    =
+    \begin{bmatrix} 
+        0& 0& 0 \\
+        0& 0& \frac{1}{l}\\
+        0& -g& \frac{-c}{ml}
+    \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+    B
+    =
+    \begin{bmatrix} 
+        1 \\
+        \frac{-1}{l}\\
+        \frac{c}{ml}
+    \end{bmatrix}
+\end{equation}

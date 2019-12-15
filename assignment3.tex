@@ -1,0 +1,292 @@
+\clearpage
+\section{State feedback and state estimation}
+
+In this part of the task a Kalman filter will be designed to be used as a position estimator. A reference position is given to the cart and then it will drive up to that position. The cart has a forward facing distance sensor so this information can be used to see how close it is to the wall and to be able to correct the estimate of how close it is to the wall.
+
+\subsection{Design of a state feedback controller}
+
+The first step to the design of the feedback controller is determining the state space equations of the system. After these have been determined the state feedback gain can be determined. Equation (\ref{eq:contstatespace}) is the continuous closed loop state space model\\
+ \begin{equation}
+    \begin{cases}
+    \dot{\textbf{x}}(t) = \textbf{Ax}(t) + \textbf{B}u(t)\\
+    y(t) = \textbf{Cx}(t)
+    \end{cases}
+    \label{eq:contstatespace}
+\end{equation}
+\\
+The basic equation for continuous state feedback is given in equation \ref{eq:contstatespace1}. Now for the calculation of velocity the current and next position is not needed. Therefor A can be taken equal to zero. The input (u(t)) in this can be taken equal to the velocity of the cart.
+\begin{equation}
+    \dot{\textbf{x}}(t) = \textbf{Ax}(t) + \textbf{B}u(t) \\
+    \label{eq:contstatespace1}
+\end{equation}
+A simple equation is obtained in the continuous domain. 
+\begin{equation}
+    \dot{x}(t) = u(t)
+\end{equation}
+The next step is to apply a Laplace transformation 
+\begin{equation}
+    sX(s) = U(s)
+\end{equation}
+Then to transform this equation to the discrete time domain forward Euler is used (s$\rightarrow\frac{z\minus1}{T_{s}}$). After moving around the terms the following equation is obtained
+\begin{equation}
+    zX(z) = T_{s}U(z) + X(z)
+\end{equation}
+Now transforming to the k domain gives the following
+\begin{equation}
+    x_{k+1} = x_{k} + T_{s}u_{k}
+\end{equation}
+\\
+Comparing this equation with equation \ref{eq:discstatespace} matrices A and B can be determined. Matrix C can be determined by looking at what data is measured vs the output x(k+1). Since the sensor gives a negative distance C is chosen so that the sign of the calculations and the measurements match.\\
+
+ \begin{equation}
+    \begin{cases}
+    \textbf{x}_{k+1} = \textbf{Ax}_{k} + \textbf{B}u_{k}\\
+    y_{k} = \textbf{Cx}_{k}
+    \end{cases}
+    \label{eq:discstatespace}
+\end{equation}
+So the values of A, B and C are
+\begin{itemize}
+    \item \textbf{A} = $\begin{bmatrix} 1 \end{bmatrix}$
+    \item \textbf{B} = $\begin{bmatrix} T_{s} \end{bmatrix}$
+    \item \textbf{C} = $\begin{bmatrix} -1 \end{bmatrix}$
+\end{itemize}
+\\
+To determine the poles of this closed loop system as a function of the sampling time $T_{s}$ and state feedback gain K the transfer function of the system has to be determined.\\
+\\
+Now when the open loop is closed with in the feedback loop a amplifier with gain -K the following closed loop state space model is obtained.
+\\
+ \begin{equation}
+    \begin{cases}
+    \textbf{x}_{k+1} = \textbf{(A-BK)x}_{k} + \textbf{B}r_{k} \\
+    y_{k} = \textbf{Cx}_{k}
+    \end{cases}
+    \label{eq:discstatespace}
+\end{equation}
+\\
+The closed loop transfer function is then
+\begin{equation}
+    H(z) = \frac{Y(z)}{R(z)} = \textbf{C}(z\textbf{I} - \textbf{A} + \textbf{BK})^{-1}\textbf{B}
+\end{equation}
+Filling in the obtained values for A, B and C the transfer function of the system is obtained
+\begin{equation}
+    H(z) = \frac{-T_{s}}{z+T_{s}K - 1}
+\end{equation}
+So the poles of the system as a function of K are
+\begin{equation}
+\label{eq:polessystem}
+    z = 1-T_{s}K
+\end{equation}
+If a stable system is wanted the poles should stay between -1 and 1. So K should stay between 0 and 200. The closed the poles are to 100 the faster the system will react to changing inputs, so the optimal value of K would be 100. This is also show in figure
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{{"pics assignment 3/poolzero_changinK"}}
+    \caption{Location of the poles for varying K values}
+    \label{fig:polesdiffK}
+\end{figure}
+
+\subsection{Validation of Kalman filter principles}
+
+The measurement equations of the system are slightly modified due to the effect of process and measurement noise. So the new measurement equations are
+\\
+ \begin{equation}
+    \begin{cases}
+    \textbf{x}_{k+1} = \textbf{Ax}_{k} + \textbf{B}u_{k} + \textbf{w}_{k}\\
+    y_{k} = \textbf{Cx}_{k} + v_{k}
+    \end{cases}
+    \label{eq:measurmentseq}
+\end{equation}
+\\
+with $\textbf{w}_{}k$ being the process noise and $v_{k}$ the measurement noise. Both are modelled with an expected value equal to zero and a Gaussian distribution with a co-variance (Q and R respectively).
+\begin{equation}
+    \textbf{w}_{k} \sim \mathcal{N}(0,\textbf{Q}_k)
+\end{equation}
+\begin{equation}
+    \textbf{v}_{k} \sim \mathcal{N}(0,R_k)
+\end{equation}
+However a constant value for Q and R can be assumed.\\
+\\
+The values of \textbf{C} is still -1 and D is equal to zero.\\
+\\
+The optimal Kalman gain is L. Now for future use $\textbf{L}_{k+1}$ is rewritten as a function of $\^{\textbf{P}}_{k|k}$, Q and R. S is the innovation co-variance and P the co-variance of the prediction (can be a priori or a posteriori). The start equation of $\textbf{L}_{k+1}$ is
+\begin{equation}
+    \textbf{L}_{k+1} = \hat{\textbf{P}}_{k+1|k} \textbf{C}^{T} \textbf{S}_{k+1}^{-1}
+    \label{eq:beginvglLk+1}
+\end{equation}
+The following equations are then substituted in this equation
+\begin{itemize}
+    \label{eq:substituteequations}
+    \item $\^{\textbf{P}}_{k+1|k}$ = $\textbf{A}$ $\^{\textbf{P}}_{k|k}$ $\textbf{A}^{T}$ + $\textbf{Q}_{k}$
+    \item \textbf{C} = -1
+    \item $\textbf{S}_{k+1}$ = \textbf{C}$\^{\textbf{P}}_{k+1|k}$ $\textbf{C}^{T}$ + $R_{k+1}$
+\end{itemize}
+After the implementation of these equations in equation (\ref{eq:beginvglLk+1}) the following equation based only on Q, R and $\^{\textbf{P}}_{k|k}$ is obtained.
+\begin{equation}
+\label{eq:Lk+1enkelP}
+    \textbf{L}_{k+1} = \frac{-(\hat{\textbf{P}}_{k|k}+\textbf{Q})}{\hat{\textbf{P}}_{k|k}+R + \textbf{Q}}
+\end{equation}
+Now if the process noise would be infinitely high (\textbf{Q} $\rightarrow$ $\infty$), the Kalman filter would only be based on the measurements. The Kalman gain would then be
+\begin{equation}
+    \label{eq:LQinf}
+    \textbf{L}_{k+1} = -1
+\end{equation}
+If on the other hand the distance sensor was malfunctioning (R $\rightarrow$ $\infty$) the gain would be based entirely on the process. Therefor the Kalman gain would be equal to
+\begin{equation}
+    \label{eq:LRinf}
+    \textbf{L}_{k+1} = 0
+\end{equation}
+\\
+$\^{\textbf{P}}_{k+1|k+1}$ is the co-variance of the next state based on a posteriori predictions. This P can be rewritten as only a function of the current co-variance ($\^{\textbf{P}}_{k+1|k+1}$), Q and R. The formula from which the derivation starts is
+
+\begin{equation}
+    \hat{\textbf{P}}_{k+1|k+1} = \hat{\textbf{P}}_{k+1|k} - \hat{\textbf{P}}_{k+1|k}\textbf{C}^{T}\textbf{S}_{k+1}^{-1}C\hat{\textbf{P}}_{k+1|k}
+\end{equation}
+
+Now using the same equation that were substituted in equation (\ref{eq:Lk+1enkelP}) and some simplifying the following equation is obtained.
+
+\begin{equation}
+    \hat{\textbf{P}}_{k+1|k+1} = \frac{(\hat{\textbf{P}}_{k|k}+\textbf{Q})R}{\hat{\textbf{P}}_{k|k}+\textbf{Q}+R}
+\end{equation}
+
+Once again if the sensor would be broken or its co-variance would be infinitely high (R $\rightarrow$ $\infty$) the next state co-variance would be based entirely on the process and its noise. So after a while the co-variance would go to infinity. 
+
+\begin{equation}
+    \label{eq:Pk+1k+1}
+    \hat{\textbf{P}}_{k+1|k+1} = \hat{\textbf{P}}_{k|k} + \textbf{Q}
+\end{equation}
+
+Now if the opposite were true: that the process noise was infinitely high (\textbf{Q} $\rightarrow$ $\infty$) then the next state co-variance would be based entirely on the measurement. This is logical since the the Kalman filter would only use the sensors in its calculations, so the next state co-variance prediction only depends on the measurement co-variance.
+
+\begin{equation}
+    \hat{\textbf{P}}_{k+1|k+1} = R
+\end{equation}
+
+After a certain amount of time $\hat{\textbf{P}}_{k|k}$ will go over to steady state. This means that $\hat{\textbf{P}}_{k+1|k+1}$ = $\hat{\textbf{P}}_{k|k}$. The steady state value of $\hat{\textbf{P}}_{k+1|k+1}$ is renamed to $\hat{\textbf{P}}_{\infty}$. Filling this in to equation (\ref{eq:Pk+1k+1}) the steady state is found
+
+\begin{equation}
+    \hat{\textbf{P}}_{\infty} = \frac{R(\hat{\textbf{P}}_{\infty}+\textbf{Q})}{\hat{\textbf{P}}_{\infty}+\textbf{Q}+R}
+\end{equation}
+This equation can be rewritten as a second order equation
+\begin{equation}
+    \hat{\textbf{P}}_{\infty}^{2} + \textbf{Q}\hat{\textbf{P}}_{\infty}-\textbf{Q}R = 0
+\end{equation}
+This equation has two solutions. One of the two solutions is negative however a negative co-variance doesn't exists. Therefore only one solution remains
+\begin{equation}
+    \hat{\textbf{P}}_{\infty} = \frac{-\textbf{Q}+\sqrt{\textbf{Q}^{2}+4\textbf{Q}R}}{2}
+\end{equation}
+The same can be done for the Kalman gain. After some calculations two steady state gains are obtained.
+\begin{equation}
+    \textbf{L}_{\infty} = \frac{-(\textbf{Q}+\sqrt{\textbf{Q}^{2}+4\textbf{Q}R})}{\textbf{Q}+2R+\sqrt{\textbf{Q}^{2}+4\textbf{Q}R}}
+\end{equation}
+To be sure these steady state co-variance and gain formulas are correct they are compared to values of an LQE that were calculated using matlab. They are approximately equal and therefor it is concluded that the formulas are correct.\\
+\\
+The closed loop pole of the system have to be determined and rewritten. The poles are to be determined from
+\begin{equation}
+    \hat{\textbf{x}}_{k+1} = \textbf{A}\hat{\textbf{x}}_{k} + \textbf{B} u_{k} + L_{\infty}(y_{k}-\hat{y}_{k})
+    \label{eq:Linfinity}
+\end{equation}
+Using 
+\begin{equation}
+    det(z\textbf{I} - (\textbf{A}-\textbf{L}_{\infty}\textbf{C})) = 0
+\end{equation}
+Implementing \textbf{A} = 1, \textbf{C} = -1 leads to
+\begin{equation}
+\label{eq:easyzifvL}
+    z - (1+L) = 0
+\end{equation}
+When $\textbf{L}_{\infty}$ from equation (\ref{eq:Linfinity}) and some rewriting the poles can be determined as only a function of Q and R.
+\begin{equation}
+    z = 1 - \frac{\textbf{Q}+\sqrt{\textbf{Q}^{2}+4\textbf{Q}R}}{\textbf{Q}+2R+\sqrt{\textbf{Q}^{2}+4\textbf{Q}R}}
+\end{equation}
+and now as a function of Q/R
+\begin{equation}
+    z = 1 - \frac{\frac{\textbf{Q}}{R}+\sqrt{\frac{\textbf{Q}}{R}^{2}+4\frac{\textbf{Q}}{R}}}{\frac{\textbf{Q}}{R}+2+\sqrt{\frac{\textbf{Q}}{R}^{2}+4\frac{\textbf{Q}}{R}}}
+\end{equation}
+It can now be seen that if Q/R is increased that the pole will move further towards zero. So the system will be faster. The reason for this is that the process noise is very high compared to the measurement noise and therefore the system will be based heavily on the measurements. Therefore not a lot of calculations are needed and the system will react very quickly. The opposite is when Q/R goes to zero the pole goes to one. This is when the system reacts the slowest and this can also be explained by the fact that if the measurement noise is too high and only the process can be used that the system will need to calculate time consuming equations to obtain the values for the next time step.\\
+\\
+The pole can never move out of the unity circle based on a change on the Q/R value.
+\subsection{Implementation of the state estimator and feedback controller}
+
+In this section the first part will consist of tuning the feedback controller so that it works in the optimal region. The second part will consist of showing the differences of the parameters for a varying Q/R ratio.\\
+\\
+Process noise needs to be modelled because during the creating of filters and components simplifications are made and model integration errors happen. A good example in this system is the discretization of the transfer functions: certain data gets lost. Measurement noise is more obvious as it is the noise from the sensors. This noise is from imperfect measurements and compacting these measurements to be able to send them to the computer.\\
+\\
+The value of the R can be measured by placing the sensor in front of a wall and without excitation measuring the output signal. After reading out these values in matlab the command cov() can be used to calculate the co-variance of this noise. For the sensor used in this process the value of R is 2.3623e-7. The value of the process noise cannot be measured so an estimate is taken equal to the co-variance of R. The initial value of $\textbf{P}_{k|k}$ ( $\textbf{P}_{0|0}$) is taken close to its steady state value: 1e-6. For K the theoretical value of the fastest response is used: K equal to 100. All of these quantities are unit-less.\\
+\\
+The practical value of K will probably not be equal to its theoretical value. Therefore different values of K are tested and it's results measured and given in figure \ref{fig:differentKsteprespons}. It can be seen that the higher K the faster the system will respond. The reason for this is because the closer K is to 100 the closer the poles get to zero (cfr. figure \ref{fig:polesdiffK}) and a pole of zero signifies the quickest response. On the figure it can be seen that even tough K equal to two still has the fastest response, it took a while to get going. This can be explained when viewing figure \ref{fig:differentKvoltages}. When the value of K equal to two is tested the voltages to the engine become very high and the results become very illogical. The reason for this is because arduino can only handle a max voltage of 12V. Also the calculations require that all the power gets sent to the motor. Therefore the sensors don't get enough power to function properly and this data becomes unusable. Once the cart gets close enough to the wall the required voltage becomes lower than 12V and the cart can drive at maximum velocity to the wall.\\
+\\
+This previous explanation and calculations were based on a Q/R value equal to one. However if process noise is decreased and the calculations are taken more into account, then the response is slower and the K factor can be increased more towards its optimal value of 100
+\\
+\begin{figure}
+    \centering
+    \includegraphics[scale = 0.5]{{"pics assignment 3/stepreference_different_k"}}
+    \caption{Response of the system to a step input for different values of K }
+    \label{fig:differentKsteprespons}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[scale = 0.5]{{"pics assignment 3/Volt_differentK"}}
+    \caption{Voltages for }
+    \label{fig:differentKvoltages}
+\end{figure}
+
+In figure \ref{fig:PkkvarQR} the evolution of $\hat{\textbf{P}}_{k|k}$ is shown. Indeed a steady state value is reached after a certain time. Indeed if Q/R goes towards zero (R $\rightarrow$ $\infty$) then P gets closer and closer to infinity but when Q/R goes to infinity (Q $\rightarrow$ $\infty$) then the co-variance of the next state becomes equal to R. A similar reasoning, that was done before, can be done for L (optimal filter gain). As derived in formulas (\ref{eq:LQinf}) and (\ref{eq:LRinf}) if Q/R goes to zero L goes to 0 and if Q/R goes to infinity L goes to -1, this is also visible on figure \ref{fig:Lk+1varQR}.
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Variation of $\hat{\textbf{P}}_{k|k}$ for varying Q/R ratios}
+    \label{fig:PkkvarQR}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Variation of $\textbf{L}_{k+1}$ for varying Q/R ratios}
+    \label{fig:Lk+1varQR}
+\end{figure}
+\\
+The next step in the validation of the Kalman filter is checking whether then NIS and SNIS value for different Q/R ratios stays inside the confidence interval. This can be done by plotting the evolution of NIS which is equal to
+\begin{equation}
+    NIS = \nu_{k}^{T} S_{k}^{-1} \nu_{k}
+\end{equation}
+and SNIS which is the cumulative value of NIS
+\begin{equation}
+    SNIS = \sum_{j=k-M+1}^{k} \nu_{j}^{T} S_{j}^{-1} \nu_{j}
+\end{equation}
+M signifies the latest \textit{M} NIS-values to calculate the SNIS.\\
+\\
+The confidence interval is between (.......) so we expect the values to be between these values. And as seen on figures \ref{fig:NIS} and \ref{fig:SNIS} this is the case for Q/R smaller than ....., for the other cases however NIS and SNIS go slightly outside of the interval. So these Q/R ratios will not be used further during the experiments to be sure the Kalman filter is consistent.
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Evolution of NIS for different Q/R ratios}
+    \label{fig:NIS}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Evolution of SNIS for different Q/R ratios}
+    \label{fig:SNIS}
+\end{figure}
+Some reasons for the inconsistency of the Kalman filter could be ........\\
+\\
+The initial starting value of the calculations can be changed. The effect of this can be shown be showing on one hand the measured distance and on the other hand the estimated distance for different Q/R ratios. As stated before depending on the co-variance of the process noise or the measurement noise the Kalman filter will depend more on the measurements or on the calculations. Also because the calculations are time intensive the response speed or rate of change of the estimated position will be slower when Q/R is decreased and goes towards zero. This effect is visualised on figure \ref{fig:wronginitialestimate}.\\
+\\
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Measured and estimated distance for a wrong initial distance for varying Q/R ratio}
+    \label{fig:wronginitialestimate}
+\end{figure}
+\\
+To test the statement that the closer the pole to the unity circle the slower the response, the pole will be change in place such that the response will be 10 times slower. If the pole in discrete time however is increased 10 times, then this pole will be outside of the unity circle and the system will diverge. Therefore the transfer function is transformed back to the continuous domain, the poles is moved ten times closer to the y-axis and then transformed back to the discrete domain. The transformation between continuous domain and discrete domain is done via the forward Euler transformation (s \rightarrow $\tfrac{z-1}{T_{s}}$ and z \rightarrow 1+$T_{s}$s).\\
+\\
+In this exercise the original pole of the system is equal to ...(formula (\ref{eq:polessystem})), transformed back to the s-domain it is equal to ..... Multiplying this value with 10 the new value is ..., then using forward Euler again the new discrete domain pole is equal to .....\\
+\\
+Instead of changing the pole of the system the L value of the system is chosen differently via formula (\ref{eq:easyzifvL}). This leads to a value of L equal to..... Now the difference is shown on figure \ref{fig:differentL}. In this figure Q/R is equal to..., which would mean an L value of ... and the initial estimate is chosen to be equal to the actual starting value. As seen the response for the new L is slower than the initial system.
+\begin{figure}
+    \centering
+    \includegraphics{}
+    \caption{Response speed of the system for different pole locations}
+    \label{fig:differentL}
+\end{figure}
+A fast response is desired here, therefore it would be logical to choose the pole as close to zero as possible.

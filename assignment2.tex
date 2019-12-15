@@ -1,0 +1,76 @@
+\clearpage
+\section{Controller}
+\subsection{choice and design}
+The wanted specification for the system is a zero steady state error without changing the filtering of high frequency noise. A stable system is also wanted, for this all the poles -of the continuous transfer function- have to be in the left half plane (LHP). A third requirement is tracking: the output must follow the input as closely as possible. The fourth and last condition is that the error should be small when the reference is at a constant setpoint.\\
+\\
+These requirements can be achieved by either a PI- or a PID controller. The choice goes to the PI controller for two reasons. The first reason is why the PID is discarded as an option: a PID controller will amplify higher frequencies and this would amplify the noise to very high levels. The second reason is that the PI controller will fulfil all the specifications, so using a PID controller would make the work more complicated and expensive.\\
+\\
+The requirement of zero steady state error can be fulfilled by making the DC-gain infinite. A drawback of the PI controller is the phase lag that occurs when implementing this type of controller. This phase lag occurs for all frequencies higher than the break frequency ($\frac{1}{T_{i}}$). But by playing and testing different break frequencies the wanted response can be obtained.\\
+\\
+Designing the PI controller is a process with many steps. The first step is determining the crossover frequency, this frequency is chosen where the uncompensated open loop system has a phase equal to -180$^{\circ}$+PM+(10$^{\circ}$...15$^{\circ}$). The second term of this equation is the desired phase margin (here chosen to be 45$^{\circ}$). The last term is a term that anticipates the phase lag of the PI compensator (here chosen to be 15$^{\circ}$). After calculating the desired phase margin value a frequency is found that has this phase margin: $\omega_{co_{A}}$ is 82,1926 rad/s or 13,1 Hz and $\omega_{co_{B}}$ is 80,9760 rad/s or 12,9 Hz. The continuous transfer function of a PI controller \ref{eq:transferfunctie PI} contains $T_{i}$. This symbol is equal to tan(90$^{\circ}$) - (10$^{\circ}$...15$^{\circ}$). The value between the brackets is the same as before: the anticipated phase lag at crossover frequency (15$^{\circ}$). The last requirement is that K has to be chosen such that the gain of the compensated system at the crossover frequency has to be one.\\
+\begin{equation}
+    \label{eq:transferfunctie PI}
+    D(s) = \frac{K}{s}(s+\frac{1}{T_{i}})
+\end{equation}
+\\
+All unknowns have been determined and the PI controller transfer function can now be used with the transfer function of the motor in an open loop system where they are connected in series. In figure \ref{fig:bodeplot PI and transfermotor OL} the bode plot of the transfer function of the motor and controller in series is given. It is clear to see that at DC the gain will be infinite so a zero steady state error is obtained. In figure \ref{fig:bodeplot PI and transfermotor CL} the bode plot of the closed loop version is given, with unity feedback to close the loop.\\
+
+\begin{figure}
+    \centering
+    \begin{minipage}[b]{0.45\linewidth}                                          \includegraphics[scale=0.5]{{"pics assignment 2/openloopPi"}}
+        \caption{Open loop bode plot of the PI controller and motor A}
+        \label{fig:bodeplot PI and transfermotor OL}
+    \end{minipage}
+    \begin{minipage}[b]{0.45\linewidth}
+        \includegraphics[scale=0.5]{{"pics assignment 2/closedloop_frequency_response"}}
+        \caption{Closed loop bode plot of the PI controller and motor A with unity feedback}
+        \label{fig:bodeplot PI and transfermotor CL}
+    \end{minipage}
+\end{figure}
+
+The obtained numerical values of the system are:
+\begin{itemize}
+    \item $\omega_{co_{a}}$ = 82,1926 rad/s
+    \item $\omega_{co_{b}}$ = 80,9760 rad/s
+    \item $K_{a}$ = 1,2014
+    \item $K_{b}$ = 1,2074
+    \item $T_{i_{a}}$ = 0,0454
+    \item $T_{i_{b}}$ = 0,0461
+
+\end{itemize}
+
+It would be possible to have a bigger bandwidth for the PI controller up to a certain point determined by the speed of the arduino controller. The increase in bandwidth can be achieved by increasing the cross-over frequency up to a maximum value. This hasn't been done because increasing this frequency will increase the phase lag of the system. The bandwidth is determined as the cut-off frequency divided by two times pi. There is however a limit on the bandwidth and it's determined by the sampling frequency. This frequency is limited by the arduino: the void loop can only be done once every 10ms which equals to a frequency of 100 Hz. So the maximal bandwidth is equal to 100Hz.
+
+
+\subsection{Validation PI controller}
+In this section the PI controller will be tested to determine the validity of the chosen system and it's parameters. To be able to test the system a required value is imposed on the system: 5 rad/s. So the wheel is supposed to go to this radial velocity and stay on that velocity. Before that value is imposed on the system the PI controller is loaded into the arduino board so it can be tested.\\
+\\
+In figure \ref{fig:measured and simulated respons to step} the measured response of the system is given. A second curve is also plotted. This second curve is the simulated response of the PI controller and the motor transfer function. As is visible from the figure the simulated and the measured values follow the same curve so it can be stated that the PI controller is functioning properly. In figure \ref{fig:err wrt set value} the error of when a step function is applied is shown. Yet again the simulated and measured values are closely matched. In figure \ref{fig:Va en Vb met PI} the measured control signal is plotted (this is the voltage that is applied to the motors).\\
+\\
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.4]{{"pics assignment 2/response_step_withPi_MotorA"}}
+    \caption{Measured and simulated response to a set value}
+    \label{fig:measured and simulated respons to step}
+\end{figure}
+
+%%\begin{figure}
+%%    \centering
+%%   \includegraphics{}
+%%    \caption{Applied voltage to the engines A and B}
+%%    \label{fig:Va en Vb met PI}
+%%\end{figure}
+\\
+To validate the model even further a constant force disturbance is applied on the system. This is done by driving the cart up a slope that has a fixed angle. From the figure \ref{fig:constant force disturbance} it's clear to see that even though there is a disturbance the wheel still reaches the velocity set point and thus tracks the set value. After these test it can be assumed that the PI controller is working as envisioned. Other possible disturbances could be extra weight or dragging or pushing a certain object\\
+\begin{figure}
+    \centering
+    \includegraphics[scale = 0.52]{{"pics assignment 2/error_step_closedloop_MotorA"}}
+    \caption{Visualisation of the error compared to the set value for motor A}
+    \label{fig:err wrt set value}
+\end{figure}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.5]{{"pics assignment 2/stephill_MotorA"}}
+    \caption{Reaction of the system to a constant force disturbance}
+    \label{fig:constant force disturbance}
+\end{figure}
